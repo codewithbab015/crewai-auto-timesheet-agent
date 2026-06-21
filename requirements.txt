@@ -2,3 +2,4 @@ pydantic[email]
 qdrant-client
 crewai[rag]
 sqlmodel
+fastapi

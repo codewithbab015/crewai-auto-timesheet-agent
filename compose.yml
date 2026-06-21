@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:14.23-alpine3.24
+    container_name: timesheet-agent-postgres-1
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=12345
+      - POSTGRES_DB=timesheet-agent-db
+    ports:
+      - "5432:5432"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: timesheet-agent-pgadmin-1
+    ports:
+      - "5050:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=tekgameus@gmail.com
+      - PGADMIN_DEFAULT_PASSWORD=12345
+      - PGADMIN_CONFIG_SERVER_MODE=False
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False

@@ -2,8 +2,6 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from crew import CrewaiTimesheetAgent
-from database import get_session
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -13,7 +11,10 @@ from fastapi import (
     UploadFile,
     status,
 )
-from models import (
+from sqlmodel import Session
+
+from app.database import get_session
+from app.models import (
     AgentRequest,
     AgentResponse,
     AgentTaskStatus,
@@ -21,12 +22,11 @@ from models import (
     FileUploadResponse,
     FileUploads,
 )
-from sqlmodel import Session
+from src.crewai_timesheet_agent.crew import CrewaiTimesheetAgent
 
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -38,14 +38,12 @@ ALLOWED_MIME_TYPES = {ft.value for ft in FileType}
 # Replace with a database table or Redis for production.
 agent_run_store: dict[uuid.UUID, AgentResponse] = {}
 
-router = APIRouter(prefix="/api/v1", tags=["Timesheet Agent"])
+router = APIRouter()
 
 
 # ---------------------------------------------------------------------------
 # Dependencies
 # ---------------------------------------------------------------------------
-
-
 def get_file_upload_or_404(
     file_upload_id: uuid.UUID,
     session: Session = Depends(get_session),
@@ -63,8 +61,6 @@ def get_file_upload_or_404(
 # ---------------------------------------------------------------------------
 # Background task — runs the CrewAI pipeline
 # ---------------------------------------------------------------------------
-
-
 def run_agent_crew(
     request_id: uuid.UUID,
     employee_fullnames: list[str],
@@ -122,7 +118,7 @@ def run_agent_crew(
     status_code=status.HTTP_201_CREATED,
     summary="Upload a transcription file",
     description=(
-        "Accepts a transcription file (txt, pdf, docx, vtt, or srt), validates it, "
+        "Accepts a transcription file (txt, pdf or docx), validates it, "
         "saves it to local storage, and returns the file metadata including its UUID. "
         "Use the returned UUID as `file_upload_id` when calling POST /run-agent."
     ),

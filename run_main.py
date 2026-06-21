@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.database import create_db_and_tables
-from app.routers import router
+from app.routers import router as agent_router
 
 
 @asynccontextmanager
@@ -24,4 +24,4 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.include_router(router)
+app.include_router(agent_router, prefix="/api", tags=["Timesheet Agent"])

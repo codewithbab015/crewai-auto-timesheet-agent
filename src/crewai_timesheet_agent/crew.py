@@ -12,8 +12,8 @@ class CrewaiTimesheetAgent:
     agents: List[BaseAgent]
     tasks: List[Task]
 
-    agents_config = "config/agents.yml"
-    tasks_config = "config/tasks.yml"
+    agents_config = "config/agents.yaml"
+    tasks_config = "config/tasks.yaml"
 
     # ---------------------------------------------------------------------------
     # Agents
@@ -23,6 +23,13 @@ class CrewaiTimesheetAgent:
     def find_speaker(self) -> Agent:
         return Agent(
             config=self.agents_config["find_speaker"],
+            verbose=True,
+        )
+
+    @agent
+    def transcription_extractor(self) -> Agent:
+        return Agent(
+            config=self.agents_config["transcription_extractor"],
             verbose=True,
         )
 
@@ -80,11 +87,19 @@ class CrewaiTimesheetAgent:
         )
 
     @task
+    def transcription_extraction_task(self) -> Task:
+        return Task(
+            config=self.tasks_config["transcription_extraction_task"],
+            agent=self.transcription_extractor(),
+            context=[self.find_speaker_task()],
+        )
+
+    @task
     def employee_detection_task(self) -> Task:
         return Task(
             config=self.tasks_config["employee_detection_task"],
             agent=self.employee_detection(),
-            context=[self.find_speaker_task()],
+            context=[self.transcription_extraction_task()],
         )
 
     @task

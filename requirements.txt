@@ -1,5 +1,8 @@
 pydantic[email]
 qdrant-client
-crewai[rag]
+crewai
 sqlmodel
 fastapi
+fastapi[standard]
+psycopg
+psycopg_binary

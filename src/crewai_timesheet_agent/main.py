@@ -1,18 +1,40 @@
 #!/usr/bin/env python
 import sys
 import warnings
-from datetime import datetime
+from datetime import datetime, timezone
+from pathlib import Path
 
 from crewai_timesheet_agent.crew import CrewaiTimesheetAgent
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
 
+file_path = "/home/nbaloyi/research/crewai_timesheet_agent/uploads/bafef5e2-830b-45b5-bc6e-2d770d316748_daily_standup_20260619.txt"
+
+
+def load_transcription(path: str) -> str:
+    """Reads transcription text from a file path."""
+    file = Path(path)
+    if not file.exists():
+        print(f"[ERROR] Transcription file not found: {path}")
+        sys.exit(1)
+    if not file.is_file():
+        print(f"[ERROR] Path is not a file: {path}")
+        sys.exit(1)
+    return file.read_text(encoding="utf-8")
+
+
 def run():
     """
     Run the crew.
     """
-    inputs = {"team_transcription": "AI LLMs", "current_year": str(datetime.now().year)}
+
+    today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    inputs = {
+        "team_transcription": load_transcription(file_path),
+        "employee_name": "Nhlanhla Baloyi",
+        "today_date": today_date,
+    }
 
     try:
         CrewaiTimesheetAgent().crew().kickoff(inputs=inputs)
@@ -24,7 +46,13 @@ def train():
     """
     Train the crew for a given number of iterations.
     """
-    inputs = {"topic": "AI LLMs", "current_year": str(datetime.now().year)}
+    today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    inputs = {
+        "team_transcription": "AI LLMs",
+        "employee_name": "Nhlanhla Baloyi",
+        "today_date": today_date,
+    }
+
     try:
         CrewaiTimesheetAgent().crew().train(
             n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs
@@ -32,58 +60,3 @@ def train():
 
     except Exception as e:
         raise Exception(f"An error occurred while training the crew: {e}")
-
-
-def replay():
-    """
-    Replay the crew execution from a specific task.
-    """
-    try:
-        CrewaiTimesheetAgent().crew().replay(task_id=sys.argv[1])
-
-    except Exception as e:
-        raise Exception(f"An error occurred while replaying the crew: {e}")
-
-
-def test():
-    """
-    Test the crew execution and returns the results.
-    """
-    inputs = {"topic": "AI LLMs", "current_year": str(datetime.now().year)}
-
-    try:
-        CrewaiTimesheetAgent().crew().test(
-            n_iterations=int(sys.argv[1]), eval_llm=sys.argv[2], inputs=inputs
-        )
-
-    except Exception as e:
-        raise Exception(f"An error occurred while testing the crew: {e}")
-
-
-def run_with_trigger():
-    """
-    Run the crew with trigger payload.
-    """
-    import json
-
-    if len(sys.argv) < 2:
-        raise Exception(
-            "No trigger payload provided. Please provide JSON payload as argument."
-        )
-
-    try:
-        trigger_payload = json.loads(sys.argv[1])
-    except json.JSONDecodeError:
-        raise Exception("Invalid JSON payload provided as argument")
-
-    inputs = {
-        "crewai_trigger_payload": trigger_payload,
-        "topic": "",
-        "current_year": "",
-    }
-
-    try:
-        result = CrewaiTimesheetAgent().crew().kickoff(inputs=inputs)
-        return result
-    except Exception as e:
-        raise Exception(f"An error occurred while running the crew with trigger: {e}")

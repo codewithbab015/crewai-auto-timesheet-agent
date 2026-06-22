@@ -1,0 +1,64 @@
+{
+  "tasks": [
+    {
+      "employee_name": "Nhlanhla Baloyi",
+      "task_title": "Deploy game code",
+      "description": "Package and deploy the latest game build to the target environment. Verify deployment success by checking logs and confirming the game loads correctly.",
+      "day_type": "Today",
+      "estimated_hours": 2.0,
+      "start_time": "09:00",
+      "end_time": "11:00",
+      "status": "Scheduled for Today"
+    },
+    {
+      "employee_name": "Nhlanhla Baloyi",
+      "task_title": "Attend daily stand-up",
+      "description": "Participate in the team stand-up to align on progress, blockers, and priorities for the day. Capture any action items and confirm ownership.",
+      "day_type": "Today",
+      "estimated_hours": 0.5,
+      "start_time": "11:15",
+      "end_time": "11:45",
+      "status": "Scheduled for Today"
+    },
+    {
+      "employee_name": "Nhlanhla Baloyi",
+      "task_title": "Update office time sheets",
+      "description": "Head to the office and complete/update timesheets accurately for the relevant work period. Double-check entries against expected hours and ensure submission readiness.",
+      "day_type": "Today",
+      "estimated_hours": 1.5,
+      "start_time": "12:00",
+      "end_time": "13:30",
+      "status": "Scheduled for Today"
+    },
+    {
+      "employee_name": "Nhlanhla Baloyi",
+      "task_title": "Fixed most WhatsApp-related bugs",
+      "description": "Investigated and resolved the majority of reported issues affecting the WhatsApp-related functionality. Confirmed fixes by running the relevant code paths and performing basic validation.",
+      "day_type": "Previous Day",
+      "estimated_hours": 3.0,
+      "start_time": "",
+      "end_time": "",
+      "status": "Completed for Previous Day"
+    },
+    {
+      "employee_name": "Nhlanhla Baloyi",
+      "task_title": "Cleaned up WhatsApp codebase",
+      "description": "Refactored and cleaned the WhatsApp-related code for readability and maintainability. Removed minor inconsistencies and ensured the code remains functional after cleanup.",
+      "day_type": "Previous Day",
+      "estimated_hours": 2.0,
+      "start_time": "",
+      "end_time": "",
+      "status": "Completed for Previous Day"
+    },
+    {
+      "employee_name": "Nhlanhla Baloyi",
+      "task_title": "Attended working session with Sipho and Aphiwe",
+      "description": "Participated in a working session to discuss current progress, technical decisions, and any blockers. Documented agreed next steps for follow-up work.",
+      "day_type": "Previous Day",
+      "estimated_hours": 1.0,
+      "start_time": "",
+      "end_time": "",
+      "status": "Completed for Previous Day"
+    }
+  ]
+}

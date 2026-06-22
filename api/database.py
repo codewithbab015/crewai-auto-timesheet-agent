@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from sqlmodel import Session, SQLModel, create_engine
 
-DATABASE_URL = "postgresql+psycopg://user:12345@localhost:5432/timesheet_agent.db"
+DATABASE_URL = "postgresql+psycopg://user:12345@localhost:5432/timesheet-agent-db"
 
 engine = create_engine(DATABASE_URL, echo=True)
 

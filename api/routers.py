@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from threading import Lock
 
 from fastapi import (
     APIRouter,
@@ -13,8 +14,9 @@ from fastapi import (
 )
 from sqlmodel import Session
 
-from app.database import get_session
-from app.models import (
+from agents.crew_manager import TimesheetAgent
+from api.database import get_session
+from api.models import (
     AgentRequest,
     AgentResponse,
     AgentTaskStatus,
@@ -22,7 +24,6 @@ from app.models import (
     FileUploadResponse,
     FileUploads,
 )
-from src.crewai_timesheet_agent.crew import CrewaiTimesheetAgent
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -34,21 +35,20 @@ MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
 
 ALLOWED_MIME_TYPES = {ft.value for ft in FileType}
 
-# In-memory store for agent run statuses.
-# Replace with a database table or Redis for production.
+# In-memory store for agent run statuses with concurrent lock processing
 agent_run_store: dict[uuid.UUID, AgentResponse] = {}
+store_lock = Lock()
 
 router = APIRouter()
 
 
 # ---------------------------------------------------------------------------
-# Dependencies
+# Helpers / Explicit Fetching
 # ---------------------------------------------------------------------------
-def get_file_upload_or_404(
-    file_upload_id: uuid.UUID,
-    session: Session = Depends(get_session),
+def fetch_file_upload_record(
+    file_upload_id: uuid.UUID, session: Session
 ) -> FileUploads:
-    """Reusable dependency — fetches a FileUploads record or raises 404."""
+    """Helper method to explicitly locate a record or raise a 404 error."""
     record = session.get(FileUploads, file_upload_id)
     if not record:
         raise HTTPException(
@@ -68,43 +68,51 @@ def run_agent_crew(
 ) -> None:
     """
     Executes the CrewAI timesheet pipeline in the background.
-    Updates agent_run_store with status throughout.
+    Updates agent_run_store securely using locks throughout lifecycle.
     """
     try:
-        # Mark as running
-        agent_run_store[request_id].status = AgentTaskStatus.RUNNING
+        # Securely switch state to running
+        with store_lock:
+            if request_id in agent_run_store:
+                agent_run_store[request_id].status = AgentTaskStatus.RUNNING
 
         today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-        # Read transcription file content
+        # Read transcription file content safely
         transcription_text = Path(transcription_path).read_text(encoding="utf-8")
 
-        # Run the crew for each employee in the request
+        # Run the crew for each employee in the request context
         output_files = []
         for employee_name in employee_fullnames:
             inputs = {
                 "team_transcription": transcription_text,
-                "transcription": transcription_text,
                 "employee_name": employee_name,
                 "today_date": today_date,
             }
-            CrewaiTimesheetAgent().crew().kickoff(inputs=inputs)
-            output_files.append(
-                f"timesheet_{employee_name.replace(' ', '_')}_{today_date}.csv"
-            )
 
-        # Mark as completed
-        agent_run_store[request_id].status = AgentTaskStatus.COMPLETED
-        agent_run_store[request_id].output_file = ", ".join(output_files)
-        agent_run_store[
-            request_id
-        ].message = (
-            f"Timesheet generation completed for: {', '.join(employee_fullnames)}."
-        )
+            # Run the clean 3-agent pipeline execution
+            results = TimesheetAgent().crew().kickoff(inputs=inputs)
+
+            # Use results.json_dict safely if using Pydantic output, fallback to string format
+            output_filename = (
+                f"timesheet_{employee_name.replace(' ', '_')}_{today_date}.json"
+            )
+            output_files.append(output_filename)
+
+        # Securely switch state to completed
+        with store_lock:
+            if request_id in agent_run_store:
+                agent_run_store[request_id].status = AgentTaskStatus.COMPLETED
+                agent_run_store[request_id].output_file = ", ".join(output_files)
+                agent_run_store[
+                    request_id
+                ].message = f"Timesheet generation completed for: {', '.join(employee_fullnames)}."
 
     except Exception as exc:
-        agent_run_store[request_id].status = AgentTaskStatus.FAILED
-        agent_run_store[request_id].message = f"Agent crew failed: {str(exc)}"
+        with store_lock:
+            if request_id in agent_run_store:
+                agent_run_store[request_id].status = AgentTaskStatus.FAILED
+                agent_run_store[request_id].message = f"Agent crew failed: {str(exc)}"
 
 
 # ---------------------------------------------------------------------------
@@ -119,8 +127,7 @@ def run_agent_crew(
     summary="Upload a transcription file",
     description=(
         "Accepts a transcription file (txt, pdf or docx), validates it, "
-        "saves it to local storage, and returns the file metadata including its UUID. "
-        "Use the returned UUID as `file_upload_id` when calling POST /run-agent."
+        "saves it to local storage, and returns the file metadata including its UUID."
     ),
 )
 async def upload_transcription(
@@ -131,13 +138,9 @@ async def upload_transcription(
     if file.content_type not in ALLOWED_MIME_TYPES:
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail=(
-                f"Unsupported file type '{file.content_type}'. "
-                f"Allowed types: {', '.join(ALLOWED_MIME_TYPES)}"
-            ),
+            detail=f"Unsupported file type '{file.content_type}'. Allowed types: {', '.join(ALLOWED_MIME_TYPES)}",
         )
 
-    # Read file content and validate size
     content = await file.read()
     file_size = len(content)
 
@@ -150,10 +153,9 @@ async def upload_transcription(
     if file_size > MAX_FILE_SIZE_BYTES:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File size exceeds the maximum allowed size of {MAX_FILE_SIZE_BYTES // (1024 * 1024)} MB.",
+            detail=f"File size exceeds maximum allowed limit of {MAX_FILE_SIZE_BYTES // (1024 * 1024)} MB.",
         )
 
-    # Save file to disk
     file_id = uuid.uuid4()
     safe_filename = f"{file_id}_{file.filename}"
     file_path = UPLOAD_DIR / safe_filename
@@ -161,7 +163,6 @@ async def upload_transcription(
     with open(file_path, "wb") as buffer:
         buffer.write(content)
 
-    # Persist metadata to database
     upload_record = FileUploads(
         id=file_id,
         file_name=file.filename,
@@ -183,19 +184,19 @@ async def upload_transcription(
     status_code=status.HTTP_202_ACCEPTED,
     summary="Trigger the timesheet agent crew",
     description=(
-        "Accepts a list of employee full names and a previously uploaded file UUID. "
-        "Triggers the CrewAI pipeline asynchronously in the background. "
-        "Returns a `request_id` which can be used to poll POST /status/{request_id}."
+        "Accepts a JSON payload body containing employee names and an explicit file ID. "
+        "Triggers processing asynchronously."
     ),
 )
 async def run_agent(
     body: AgentRequest,
     background_tasks: BackgroundTasks,
-    file_record: FileUploads = Depends(get_file_upload_or_404),
+    session: Session = Depends(get_session),
 ) -> AgentResponse:
+    file_record = fetch_file_upload_record(body.file_upload_id, session)
+
     request_id = uuid.uuid4()
 
-    # Build initial pending response and store it
     response = AgentResponse(
         request_id=request_id,
         status=AgentTaskStatus.PENDING,
@@ -203,9 +204,10 @@ async def run_agent(
         file_upload_id=body.file_upload_id,
         message="Agent crew has been queued and will begin processing shortly.",
     )
-    agent_run_store[request_id] = response
 
-    # Queue background task
+    with store_lock:
+        agent_run_store[request_id] = response
+
     background_tasks.add_task(
         run_agent_crew,
         request_id=request_id,
@@ -223,12 +225,13 @@ async def run_agent(
     summary="Poll agent run status",
     description=(
         "Returns the current status of a previously triggered agent run. "
-        "Status will be one of: pending, running, completed, or failed. "
-        "When completed, the `output_file` field contains the path to the generated CSV."
+        "When completed, the `output_file` field contains the path to the generated JSON files."
     ),
 )
 async def get_agent_status(request_id: uuid.UUID) -> AgentResponse:
-    run = agent_run_store.get(request_id)
+    with store_lock:
+        run = agent_run_store.get(request_id)
+
     if not run:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

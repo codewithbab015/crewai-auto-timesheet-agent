@@ -1,54 +1,73 @@
-# CrewaiTimesheetAgent Crew
+# AI Timesheet Agent
 
-Welcome to the CrewaiTimesheetAgent Crew project, powered by [crewAI](https://crewai.com). This template is designed to help you set up a multi-agent AI system with ease, leveraging the powerful and flexible framework provided by crewAI. Our goal is to enable your agents to collaborate effectively on complex tasks, maximizing their collective intelligence and capabilities.
+> Transforming conversational updates and meeting summaries into structured, timesheet-ready entries.
 
-## Installation
+## Overview
 
-Ensure you have Python >=3.10 <3.14 installed on your system. This project uses [UV](https://docs.astral.sh/uv/) for dependency management and package handling, offering a seamless setup and execution experience.
+In most organizations, employees don't forget what they did; they just forget to log it. Valuable work data already exists across various platforms in the form of daily standup notes, Slack/Teams updates, and Zoom/Teams AI meeting transcripts. 
 
-First, if you haven't already, install uv:
+The AI Timesheet Agent bridges the gap between daily communication and administrative compliance. Instead of forcing employees to retrospectively reconstruct their week, this agent automatically extracts, structures, and formats conversational work updates into precise, timesheet-ready data. The goal isn't to invent work—it's to translate reported work.
 
-```bash
-pip install uv
-```
+---
 
-Next, navigate to your project directory and install the dependencies:
+## The Problem
 
-(Optional) Lock the dependencies and install them by using the CLI command:
-```bash
-crewai install
-```
-### Customizing
+Employees consistently struggle with timesheet compliance due to a predictable pattern:
+* **Fragmented Context:** Work happens continuously throughout the week, making manual tracking tedious.
+* **Retrospective Friction:** Reconstructing a 40-hour workweek on Friday afternoon leads to inaccuracies and lost billable hours.
+* **Duplicate Effort:** Employees already detail their progress daily in standups, yet have to type it again in a timesheet tool.
+* **Formatting Overhead:** Converting a casual phrase like "Spent the morning fixing that login bug and then hopped on a client call" into structured project codes and hour blocks is high-friction.
 
-**Add your `OPENAI_API_KEY` into the `.env` file**
+---
 
-- Modify `src/crewai_timesheet_agent/config/agents.yaml` to define your agents
-- Modify `src/crewai_timesheet_agent/config/tasks.yaml` to define your tasks
-- Modify `src/crewai_timesheet_agent/crew.py` to add your own logic, tools and specific args
-- Modify `src/crewai_timesheet_agent/main.py` to add custom inputs for your agents and tasks
+## The Solution
 
-## Running the Project
+This AI Agent automates the conversion of informal text or transcripts into structured daily time entries. 
 
-To kickstart your crew of AI agents and begin task execution, run this from the root folder of your project:
+### Key Features
+* **Conversational Parsing:** Understands natural language context, implied durations, and project associations.
+* **Contextual Time Estimation:** Intelligent mapping of vague phrases (e.g., "hopped on a quick call") into realistic decimal hours based on organizational rules.
+* **Project & Task Tagging:** Categorizes activities into pre-defined internal project codes or client accounts.
+* **Integration Ready:** Designed to ingest data from Slack, MS Teams, Zoom AI Companions, or Scrum updates, and output clean JSON or direct API payloads for tools like Harvest, Jira, or Toggl.
 
-```bash
-$ crewai run
-```
+---
 
-This command initializes the crewai-timesheet-agent Crew, assembling the agents and assigning them tasks as defined in your configuration.
+## Architecture & Workflow
 
-This example, unmodified, will run the create a `report.md` file with the output of a research on LLMs in the root folder.
+1. **Ingestion:** The agent receives text input (Standup notes, Slack messages, meeting transcripts).
+2. **Analysis:** The LLM-powered engine extracts key components: Date, Project, Activity, and Duration.
+3. **Structuring:** Validates extracted data against corporate timesheet schemas.
+4. **Export:** Generates standard timesheet entries ready for user review or automated API submission.
 
-## Understanding Your Crew
+---
 
-The crewai-timesheet-agent Crew is composed of multiple AI agents, each with unique roles, goals, and tools. These agents collaborate on a series of tasks, defined in `config/tasks.yaml`, leveraging their collective skills to achieve complex objectives. The `config/agents.yaml` file outlines the capabilities and configurations of each agent in your crew.
+## Input / Output Example
 
-## Support
+### Input (Raw Standup Text)
+> "Yesterday I spent about 3 hours debugging the checkout API with Sarah. After that, I knocked out the UI tweaks for the dashboard update (took maybe 1.5 hours). Finished the day prepping slides for the Q3 stakeholder alignment meeting."
 
-For support, questions, or feedback regarding the CrewaiTimesheetAgent Crew or crewAI.
-- Visit our [documentation](https://docs.crewai.com)
-- Reach out to us through our [GitHub repository](https://github.com/joaomdmoura/crewai)
-- [Join our Discord](https://discord.com/invite/X4JWnZnxPb)
-- [Chat with our docs](https://chatg.pt/DWjSBZn)
-
-Let's create wonders together with the power and simplicity of crewAI.
+### Output (Structured Timesheet Data)
+```json
+[
+  {
+    "date": "2026-06-22",
+    "project": "E-Commerce Core",
+    "task": "API Debugging",
+    "hours": 3.0,
+    "description": "Collaborated on debugging the checkout API."
+  },
+  {
+    "date": "2026-06-22",
+    "project": "Internal Analytics",
+    "task": "UI Development",
+    "hours": 1.5,
+    "description": "Implemented user interface adjustments for the dashboard update."
+  },
+  {
+    "date": "2026-06-22",
+    "project": "Management & Operations",
+    "task": "Stakeholder Alignment",
+    "hours": 1.0,
+    "description": "Prepared presentation materials for the Q3 stakeholder meeting."
+  }
+]

@@ -1,5 +1,5 @@
 [project]
-name = "crewai_timesheet_agent"
+name = "timesheet_crews"
 version = "0.1.0"
 description = "crewai-timesheet-agent using crewAI"
 authors = [{ name = "Your Name", email = "you@example.com" }]
@@ -15,16 +15,8 @@ dependencies = [
 ]
 
 [project.scripts]
-crewai_timesheet_agent = "crewai_timesheet_agent.main:run"
-run_crew = "crewai_timesheet_agent.main:run"
-train = "crewai_timesheet_agent.main:train"
-replay = "crewai_timesheet_agent.main:replay"
-test = "crewai_timesheet_agent.main:test"
-run_with_trigger = "crewai_timesheet_agent.main:run_with_trigger"
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+agents = "agents.run_main:run"
+run_crew = "agents.run_main:run"
 
 [tool.crewai]
 type = "crew"

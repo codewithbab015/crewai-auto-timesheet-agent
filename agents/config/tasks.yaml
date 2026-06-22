@@ -1,0 +1,62 @@
+analyze_and_extract_transcript_task:
+  description: >
+    Scan {team_transcription} to verify if {employee_name} was present and speaking. 
+    If not found, stop processing and return: "Employee {employee_name} not found in transcription." 
+    If present, isolate their specific transcription segments. Strip out all verbal informalities, 
+    repetitions, and filler words (e.g., 'um', 'uh', 'like'). Rewrite their spoken updates into 
+    clear, grammatically correct business English while maintaining 100% of the technical meaning. 
+    Finally, categorize these cleaned updates into two distinct bulleted lists:
+    1. Previous Day Tasks (work completed or worked on yesterday)
+    2. Today's Tasks (work planned or in-progress today)
+  expected_output: >
+    A structured report containing:
+    - Employee Name: {employee_name}
+    - Presence: Present
+    - Cleaned Previous Day Tasks: <bulleted list or "None mentioned">
+    - Cleaned Today's Tasks: <bulleted list or "None mentioned">
+  agent: transcript_analyst
+
+structure_and_schedule_tasks_task:
+  description: >
+    Take the cleaned task lists for {employee_name} from the analyze_and_extract_transcript_task. 
+    Transform every raw item into a professional task entry. For each task, generate a short, 
+    action-oriented title (max 8 words) and a clear 2-3 sentence description. 
+    Assign a realistic hourly estimate based on standard software engineering effort patterns. 
+    Ensure the sum of Today's tasks fits within a standard working day; if a description is too 
+    vague, mark its hours as "Needs Clarification". 
+    Finally, sequence Today's tasks chronologically starting at 09:00 on {today_date}, adding a 
+    15-minute buffer between each. Previous Day tasks should remain unscheduled (marked as N/A). 
+    Flag any daily overflow tasks that would stretch past 17:00.
+  expected_output: >
+    A structured collection of task entries. Each entry must strictly contain:
+    - Task Title: <title>
+    - Description: <description>
+    - Day Type: <Previous Day | Today>
+    - Estimated Hours: <number or Needs Clarification>
+    - Start Time: <HH:MM or N/A>
+    - End Time: <HH:MM or N/A>
+    - Status: <Completed for Previous Day | Scheduled for Today>
+  agent: project_coordinator
+
+export_timesheet_json_task:
+  description: >
+    Take the structured, scheduled task collection for {employee_name} on {today_date} from 
+    the structure_and_schedule_tasks_task and compile it into a clean, valid JSON file. 
+    The file must be structured as a JSON array of objects, where each object represents a single task. 
+    Map the data exactly to these JSON keys: 
+    - employee_name
+    - task_title
+    - description
+    - day_type
+    - estimated_hours
+    - start_time
+    - end_time
+    - status
+    Ensure all fields are correctly populated. For any Previous Day tasks, output the 
+    start_time and end_time fields as empty strings ("") in the JSON structure. 
+    Save the final output file locally.
+  expected_output: >
+    A valid, well-formatted JSON file saved exactly as timesheet_{employee_name}_{today_date}.json 
+    containing an array of structured task objects with all fields populated.
+  agent: timesheet_exporter
+  output_file: "timesheet_{employee_name}_{today_date}.json"

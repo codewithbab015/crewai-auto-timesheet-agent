@@ -4,7 +4,7 @@ import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 
-from crewai_timesheet_agent.crew import CrewaiTimesheetAgent
+from crew_manager import TimesheetAgent
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
@@ -37,26 +37,12 @@ def run():
     }
 
     try:
-        CrewaiTimesheetAgent().crew().kickoff(inputs=inputs)
+        results = TimesheetAgent().crew().kickoff(inputs=inputs)
+        print(results)
+
     except Exception as e:
         raise Exception(f"An error occurred while running the crew: {e}")
 
 
-def train():
-    """
-    Train the crew for a given number of iterations.
-    """
-    today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    inputs = {
-        "team_transcription": "AI LLMs",
-        "employee_name": "Nhlanhla Baloyi",
-        "today_date": today_date,
-    }
-
-    try:
-        CrewaiTimesheetAgent().crew().train(
-            n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs
-        )
-
-    except Exception as e:
-        raise Exception(f"An error occurred while training the crew: {e}")
+if __name__ == "__main__":
+    run()

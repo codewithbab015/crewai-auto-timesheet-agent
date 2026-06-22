@@ -8,8 +8,6 @@ In most organizations, employees don't forget what they did; they just forget to
 
 The AI Timesheet Agent bridges the gap between daily communication and administrative compliance. Instead of forcing employees to retrospectively reconstruct their week, this agent automatically extracts, structures, and formats conversational work updates into precise, timesheet-ready data. The goal isn't to invent work—it's to translate reported work.
 
----
-
 ## The Problem
 
 Employees consistently struggle with timesheet compliance due to a predictable pattern:
@@ -17,8 +15,6 @@ Employees consistently struggle with timesheet compliance due to a predictable p
 * **Retrospective Friction:** Reconstructing a 40-hour workweek on Friday afternoon leads to inaccuracies and lost billable hours.
 * **Duplicate Effort:** Employees already detail their progress daily in standups, yet have to type it again in a timesheet tool.
 * **Formatting Overhead:** Converting a casual phrase like "Spent the morning fixing that login bug and then hopped on a client call" into structured project codes and hour blocks is high-friction.
-
----
 
 ## The Solution
 
@@ -30,16 +26,12 @@ This AI Agent automates the conversion of informal text or transcripts into stru
 * **Project & Task Tagging:** Categorizes activities into pre-defined internal project codes or client accounts.
 * **Integration Ready:** Designed to ingest data from Slack, MS Teams, Zoom AI Companions, or Scrum updates, and output clean JSON or direct API payloads for tools like Harvest, Jira, or Toggl.
 
----
-
 ## Architecture & Workflow
 
 1. **Ingestion:** The agent receives text input (Standup notes, Slack messages, meeting transcripts).
 2. **Analysis:** The LLM-powered engine extracts key components: Date, Project, Activity, and Duration.
 3. **Structuring:** Validates extracted data against corporate timesheet schemas.
 4. **Export:** Generates standard timesheet entries ready for user review or automated API submission.
-
----
 
 ## Input / Output Example
 

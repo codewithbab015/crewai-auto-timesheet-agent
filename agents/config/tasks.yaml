@@ -1,3 +1,22 @@
+proof_reader_task:
+  description: >
+    Review the following daily standup transcript and correct all grammatical
+    errors, unclear phrasing, and transcription artefacts while strictly
+    preserving each speaker's original intent and technical details.
+    Do not add, remove, or reinterpret any content — only improve the
+    language clarity and correctness.
+
+    Transcript:
+    {team_transcription}
+
+  expected_output: >
+    A corrected version of the full team transcription with all grammatical
+    errors and unclear passages rewritten. The output must retain every
+    speaker's original meaning, preserve all technical terms, and be
+    formatted as a clean, readable transcript ready for downstream processing.
+
+  agent: proof_reader
+
 analyze_and_extract_transcript_task:
   description: >
     Scan {team_transcription} to verify if {employee_name} was present and speaking. 

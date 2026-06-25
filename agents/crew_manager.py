@@ -46,29 +46,43 @@ class TimesheetAgent:
     # ---------------------------------------------------------------------------
 
     @agent
+    def proof_reader(self) -> Agent:
+        return Agent(
+            config=self.agents_config["proof_reader"],
+            verbose=True,
+        )
+
+    @agent
     def transcript_analyst(self) -> Agent:
         return Agent(
             config=self.agents_config["transcript_analyst"],
-            verbose=False,
+            verbose=True,
         )
 
     @agent
     def project_coordinator(self) -> Agent:
         return Agent(
             config=self.agents_config["project_coordinator"],
-            verbose=False,
+            verbose=True,
         )
 
     @agent
     def timesheet_exporter(self) -> Agent:
         return Agent(
             config=self.agents_config["timesheet_exporter"],
-            verbose=False,
+            verbose=True,
         )
 
     # ---------------------------------------------------------------------------
     # Tasks
     # ---------------------------------------------------------------------------
+
+    @task
+    def proof_reader_task(self) -> Task:
+        return Task(
+            config=self.tasks_config["proof_reader_task"],
+            agent=self.proof_reader(),
+        )
 
     @task
     def analyze_and_extract_transcript_task(self) -> Task:
@@ -105,5 +119,5 @@ class TimesheetAgent:
             agents=self.agents,
             tasks=self.tasks,
             process=Process.sequential,
-            verbose=False,
+            verbose=True,
         )

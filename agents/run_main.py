@@ -8,8 +8,8 @@ from crew_manager import TimesheetAgent
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
-
-file_path = "/home/nbaloyi/research/crewai_timesheet_agent/uploads/bafef5e2-830b-45b5-bc6e-2d770d316748_daily_standup_20260619.txt"
+file_path = "".join(f.as_posix() for f in (Path.cwd() / "uploads/").glob(r"*"))
+# print(file_path)
 
 
 def load_transcription(path: str) -> str:
